@@ -57,6 +57,7 @@ try {
             $countryCode = $data['countryCode'];
             $countryName = $data['country'] ?? $countryCode;
         }
+
     } else {
         $error = "HTTP $httpCode - $curlError";
     }
@@ -67,11 +68,15 @@ try {
 // Get language based on country
 $language = $country_language_map[$countryCode] ?? 'en';
 
+// Set cookies (removed before JSON output)
+// Cookies will be set by JavaScript on the frontend instead
+
 echo json_encode([
     'ip' => $ip,
     'countryCode' => $countryCode,
     'countryName' => $countryName,
     'language' => $language,
+    'setCookies' => true, // Signal to frontend to set cookies
     'debug' => [
         'rawResponse' => $response,
         'apiData' => $data,
