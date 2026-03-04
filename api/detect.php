@@ -33,19 +33,36 @@ $country_language_map = [
 $countryCode = 'US';
 $countryName = 'United States';
 $language = 'en';
+$response = null;
+$data = null;
+$error = null;
 
 try {
-    $response = @file_get_contents("https://ipapi.co/$ip/json/");
-    if ($response) {
+    // Use cURL instead of file_get_contents for better compatibility
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://ipapi.co/$ip/json/");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+    
+    if ($response && $httpCode == 200) {
         $data = json_decode($response, true);
         
         if (!empty($data['country_code'])) {
             $countryCode = $data['country_code'];
             $countryName = $data['country_name'] ?? $countryCode;
         }
+    } else {
+        $error = "HTTP $httpCode - $curlError";
     }
 } catch (Exception $e) {
-    // Use fallback
+    $error = $e->getMessage();
 }
 
 // Get language based on country
@@ -57,8 +74,10 @@ echo json_encode([
     'countryName' => $countryName,
     'language' => $language,
     'debug' => [
-        'rawResponse' => $response ?? null,
-        'apiData' => $data ?? null,
+        'rawResponse' => $response,
+        'apiData' => $data,
+        'error' => $error,
+        'apiUrl' => "https://ipapi.co/$ip/json/",
         'headers' => [
             'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? null,
             'HTTP_X_FORWARDED_FOR' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
