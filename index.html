@@ -120,6 +120,14 @@
         fetch('/api/detect.php')
             .then(response => response.json())
             .then(data => {
+                console.log('=== Country Detection Debug ===');
+                console.log('IP:', data.ip);
+                console.log('Country:', data.countryCode, '-', data.countryName);
+                console.log('Language:', data.language);
+                console.log('Full Response:', data);
+                console.log('Debug Info:', data.debug);
+                console.log('==============================');
+                
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('result').style.display = 'block';
                 document.getElementById('ip').textContent = data.ip;
@@ -127,9 +135,11 @@
                 document.getElementById('language').textContent = data.language;
             })
             .catch(error => {
+                console.error('=== Error ===');
+                console.error('Failed to fetch:', error);
+                console.error('=============');
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('error').style.display = 'block';
-                console.error('Error:', error);
             });
     </script>
 </body>

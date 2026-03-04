@@ -55,5 +55,14 @@ echo json_encode([
     'ip' => $ip,
     'countryCode' => $countryCode,
     'countryName' => $countryName,
-    'language' => $language
+    'language' => $language,
+    'debug' => [
+        'rawResponse' => $response ?? null,
+        'apiData' => $data ?? null,
+        'headers' => [
+            'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? null,
+            'HTTP_X_FORWARDED_FOR' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+            'HTTP_CF_CONNECTING_IP' => $_SERVER['HTTP_CF_CONNECTING_IP'] ?? null
+        ]
+    ]
 ]);
