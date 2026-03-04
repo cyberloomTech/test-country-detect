@@ -47,15 +47,28 @@ $country_name_map = [
     'MY' => 'Malaysia'
 ];
 
-// Detect country using GEOIP server variables
+// Detect country using Vercel's geolocation headers
 $countryCode = 'US'; // fallback
 $countryName = 'United States';
 $language = 'en';
 $detectionMethod = 'fallback';
 $geoipData = [];
 
-// Try different GEOIP server variables (depends on server configuration)
-if (isset($_SERVER['GEOIP_COUNTRY_CODE'])) {
+// Vercel provides geolocation in request headers
+// https://vercel.com/docs/edge-network/headers#x-vercel-ip-country
+if (isset($_SERVER['HTTP_X_VERCEL_IP_COUNTRY'])) {
+    $countryCode = $_SERVER['HTTP_X_VERCEL_IP_COUNTRY'];
+    $detectionMethod = 'Vercel Geolocation (HTTP_X_VERCEL_IP_COUNTRY)';
+    $geoipData['HTTP_X_VERCEL_IP_COUNTRY'] = $_SERVER['HTTP_X_VERCEL_IP_COUNTRY'];
+    
+    // Vercel also provides city, region, latitude, longitude
+    if (isset($_SERVER['HTTP_X_VERCEL_IP_CITY'])) {
+        $geoipData['HTTP_X_VERCEL_IP_CITY'] = $_SERVER['HTTP_X_VERCEL_IP_CITY'];
+    }
+    if (isset($_SERVER['HTTP_X_VERCEL_IP_COUNTRY_REGION'])) {
+        $geoipData['HTTP_X_VERCEL_IP_COUNTRY_REGION'] = $_SERVER['HTTP_X_VERCEL_IP_COUNTRY_REGION'];
+    }
+} elseif (isset($_SERVER['GEOIP_COUNTRY_CODE'])) {
     $countryCode = $_SERVER['GEOIP_COUNTRY_CODE'];
     $detectionMethod = 'GEOIP_COUNTRY_CODE';
     $geoipData['GEOIP_COUNTRY_CODE'] = $_SERVER['GEOIP_COUNTRY_CODE'];
@@ -86,6 +99,11 @@ echo json_encode([
         'detectionMethod' => $detectionMethod,
         'geoipData' => $geoipData,
         'allServerVars' => [
+            'HTTP_X_VERCEL_IP_COUNTRY' => $_SERVER['HTTP_X_VERCEL_IP_COUNTRY'] ?? null,
+            'HTTP_X_VERCEL_IP_CITY' => $_SERVER['HTTP_X_VERCEL_IP_CITY'] ?? null,
+            'HTTP_X_VERCEL_IP_COUNTRY_REGION' => $_SERVER['HTTP_X_VERCEL_IP_COUNTRY_REGION'] ?? null,
+            'HTTP_X_VERCEL_IP_LATITUDE' => $_SERVER['HTTP_X_VERCEL_IP_LATITUDE'] ?? null,
+            'HTTP_X_VERCEL_IP_LONGITUDE' => $_SERVER['HTTP_X_VERCEL_IP_LONGITUDE'] ?? null,
             'GEOIP_COUNTRY_CODE' => $_SERVER['GEOIP_COUNTRY_CODE'] ?? null,
             'GEOIP_COUNTRY_NAME' => $_SERVER['GEOIP_COUNTRY_NAME'] ?? null,
             'HTTP_CF_IPCOUNTRY' => $_SERVER['HTTP_CF_IPCOUNTRY'] ?? null,
