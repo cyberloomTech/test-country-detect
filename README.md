@@ -4,24 +4,50 @@ A simple PHP project that detects the user's country based on their IP address a
 
 ## Features
 
-- Detects user IP address (supports Cloudflare)
+- Detects user IP address (supports Cloudflare & proxies)
 - Uses ipapi.co API for geolocation
 - Maps countries to language codes
 - Clean, responsive UI
+- Serverless API endpoint
 
-## Usage
+## Deploy to Vercel
 
-1. Make sure you have PHP installed
-2. Run the built-in PHP server:
-   ```
-   php -S localhost:8000
-   ```
-3. Open your browser and visit: `http://localhost:8000`
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/yourrepo)
 
-## API
+1. Push this code to a GitHub repository
+2. Go to [vercel.com](https://vercel.com)
+3. Click "New Project"
+4. Import your repository
+5. Click "Deploy"
 
-This project uses the free [ipapi.co](https://ipapi.co/) API for IP geolocation. No API key required for basic usage.
+That's it! Vercel will automatically detect the PHP runtime.
+
+## Local Testing
+
+Run the built-in PHP server:
+```bash
+php -S localhost:8000
+```
+
+Then visit: `http://localhost:8000`
+
+## API Endpoint
+
+Once deployed, you can access the API at:
+```
+https://your-domain.vercel.app/api/detect.php
+```
+
+Returns JSON:
+```json
+{
+  "ip": "123.456.789.0",
+  "countryCode": "US",
+  "countryName": "United States",
+  "language": "en"
+}
+```
 
 ## Supported Countries
 
-The project includes language mappings for: US, GB, PK, FR, DE, ES, IT, PT, AE, TR, RU, JP, CN, MY
+US, GB, PK, FR, DE, ES, IT, PT, AE, TR, RU, JP, CN, MY
