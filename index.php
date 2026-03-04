@@ -1,51 +1,5 @@
-<?php
-// Get user's IP address
-$ip = $_SERVER['REMOTE_ADDR'];
-if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-    // Cloudflare users
-    $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
-}
-
-// Map countries to language codes
-$country_language_map = [
-    'US' => 'en',
-    'GB' => 'en',
-    'PK' => 'en',
-    'FR' => 'fr',
-    'DE' => 'de',
-    'ES' => 'es',
-    'IT' => 'it',
-    'PT' => 'pt-PT',
-    'AE' => 'ar',
-    'TR' => 'tr',
-    'RU' => 'ru',
-    'JP' => 'ja',
-    'CN' => 'zh-CN',
-    'MY' => 'ms'
-];
-
-// Detect country
-$countryCode = 'US'; // fallback
-$countryName = 'United States';
-$language = 'en';
-
-try {
-    $response = file_get_contents("https://ipapi.co/$ip/json/");
-    $data = json_decode($response, true);
-    
-    if (!empty($data['country_code'])) {
-        $countryCode = $data['country_code'];
-        $countryName = $data['country_name'] ?? $countryCode;
-    }
-} catch (Exception $e) {
-    $countryCode = 'US';
-}
-
-// Get language based on country
-$language = $country_language_map[$countryCode] ?? 'en';
-?>
 <!DOCTYPE html>
-<html lang="<?php echo $language; ?>">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -82,26 +36,50 @@ $language = $country_language_map[$countryCode] ?? 'en';
             color: #333;
             font-size: 18px;
         }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>🌍 Country Detection</h1>
         
-        <div class="info">
-            <div class="label">Your IP Address:</div>
-            <div class="value"><?php echo htmlspecialchars($ip); ?></div>
-        </div>
+        <div id="loading" class="loading">Loading...</div>
         
-        <div class="info">
-            <div class="label">Detected Country:</div>
-            <div class="value"><?php echo htmlspecialchars($countryName); ?> (<?php echo htmlspecialchars($countryCode); ?>)</div>
-        </div>
-        
-        <div class="info">
-            <div class="label">Language Code:</div>
-            <div class="value"><?php echo htmlspecialchars($language); ?></div>
+        <div id="result" style="display: none;">
+            <div class="info">
+                <div class="label">Your IP Address:</div>
+                <div class="value" id="ip"></div>
+            </div>
+            
+            <div class="info">
+                <div class="label">Detected Country:</div>
+                <div class="value" id="country"></div>
+            </div>
+            
+            <div class="info">
+                <div class="label">Language Code:</div>
+                <div class="value" id="language"></div>
+            </div>
         </div>
     </div>
+
+    <script>
+        fetch('/api/detect.php')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('ip').textContent = data.ip;
+                document.getElementById('country').textContent = data.countryName + ' (' + data.countryCode + ')';
+                document.getElementById('language').textContent = data.language;
+            })
+            .catch(error => {
+                document.getElementById('loading').textContent = 'Error loading data';
+                console.error('Error:', error);
+            });
+    </script>
 </body>
 </html>
