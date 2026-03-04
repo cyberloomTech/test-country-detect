@@ -29,61 +29,67 @@ $country_language_map = [
     'MY' => 'ms'
 ];
 
-// Detect country
-$countryCode = 'US';
+// Country name mapping
+$country_name_map = [
+    'US' => 'United States',
+    'GB' => 'United Kingdom',
+    'PK' => 'Pakistan',
+    'FR' => 'France',
+    'DE' => 'Germany',
+    'ES' => 'Spain',
+    'IT' => 'Italy',
+    'PT' => 'Portugal',
+    'AE' => 'United Arab Emirates',
+    'TR' => 'Turkey',
+    'RU' => 'Russia',
+    'JP' => 'Japan',
+    'CN' => 'China',
+    'MY' => 'Malaysia'
+];
+
+// Detect country using GEOIP server variables
+$countryCode = 'US'; // fallback
 $countryName = 'United States';
 $language = 'en';
-$response = null;
-$data = null;
-$error = null;
+$detectionMethod = 'fallback';
+$geoipData = [];
 
-try {
-    // Use ip-api.com - free with better rate limits (45 requests/minute)
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "http://ip-api.com/json/$ip?fields=status,message,country,countryCode,query");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    curl_close($ch);
-    
-    if ($response && $httpCode == 200) {
-        $data = json_decode($response, true);
-        
-        if (!empty($data['countryCode']) && $data['status'] === 'success') {
-            $countryCode = $data['countryCode'];
-            $countryName = $data['country'] ?? $countryCode;
-        }
-
-    } else {
-        $error = "HTTP $httpCode - $curlError";
-    }
-} catch (Exception $e) {
-    $error = $e->getMessage();
+// Try different GEOIP server variables (depends on server configuration)
+if (isset($_SERVER['GEOIP_COUNTRY_CODE'])) {
+    $countryCode = $_SERVER['GEOIP_COUNTRY_CODE'];
+    $detectionMethod = 'GEOIP_COUNTRY_CODE';
+    $geoipData['GEOIP_COUNTRY_CODE'] = $_SERVER['GEOIP_COUNTRY_CODE'];
+} elseif (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {
+    // Cloudflare provides country code
+    $countryCode = $_SERVER['HTTP_CF_IPCOUNTRY'];
+    $detectionMethod = 'HTTP_CF_IPCOUNTRY (Cloudflare)';
+    $geoipData['HTTP_CF_IPCOUNTRY'] = $_SERVER['HTTP_CF_IPCOUNTRY'];
+} elseif (isset($_SERVER['HTTP_X_COUNTRY_CODE'])) {
+    $countryCode = $_SERVER['HTTP_X_COUNTRY_CODE'];
+    $detectionMethod = 'HTTP_X_COUNTRY_CODE';
+    $geoipData['HTTP_X_COUNTRY_CODE'] = $_SERVER['HTTP_X_COUNTRY_CODE'];
 }
+
+// Get country name from mapping
+$countryName = $country_name_map[$countryCode] ?? $countryCode;
 
 // Get language based on country
 $language = $country_language_map[$countryCode] ?? 'en';
-
-// Set cookies (removed before JSON output)
-// Cookies will be set by JavaScript on the frontend instead
 
 echo json_encode([
     'ip' => $ip,
     'countryCode' => $countryCode,
     'countryName' => $countryName,
     'language' => $language,
-    'setCookies' => true, // Signal to frontend to set cookies
+    'setCookies' => true,
     'debug' => [
-        'rawResponse' => $response,
-        'apiData' => $data,
-        'error' => $error,
-        'apiUrl' => "http://ip-api.com/json/$ip",
-        'apiProvider' => 'ip-api.com (45 req/min free)',
-        'headers' => [
+        'detectionMethod' => $detectionMethod,
+        'geoipData' => $geoipData,
+        'allServerVars' => [
+            'GEOIP_COUNTRY_CODE' => $_SERVER['GEOIP_COUNTRY_CODE'] ?? null,
+            'GEOIP_COUNTRY_NAME' => $_SERVER['GEOIP_COUNTRY_NAME'] ?? null,
+            'HTTP_CF_IPCOUNTRY' => $_SERVER['HTTP_CF_IPCOUNTRY'] ?? null,
+            'HTTP_X_COUNTRY_CODE' => $_SERVER['HTTP_X_COUNTRY_CODE'] ?? null,
             'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? null,
             'HTTP_X_FORWARDED_FOR' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
             'HTTP_CF_CONNECTING_IP' => $_SERVER['HTTP_CF_CONNECTING_IP'] ?? null
