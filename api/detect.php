@@ -38,13 +38,12 @@ $data = null;
 $error = null;
 
 try {
-    // Use cURL instead of file_get_contents for better compatibility
+    // Use ip-api.com - free with better rate limits (45 requests/minute)
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://ipapi.co/$ip/json/");
+    curl_setopt($ch, CURLOPT_URL, "http://ip-api.com/json/$ip?fields=status,message,country,countryCode,query");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -54,9 +53,9 @@ try {
     if ($response && $httpCode == 200) {
         $data = json_decode($response, true);
         
-        if (!empty($data['country_code'])) {
-            $countryCode = $data['country_code'];
-            $countryName = $data['country_name'] ?? $countryCode;
+        if (!empty($data['countryCode']) && $data['status'] === 'success') {
+            $countryCode = $data['countryCode'];
+            $countryName = $data['country'] ?? $countryCode;
         }
     } else {
         $error = "HTTP $httpCode - $curlError";
@@ -77,7 +76,8 @@ echo json_encode([
         'rawResponse' => $response,
         'apiData' => $data,
         'error' => $error,
-        'apiUrl' => "https://ipapi.co/$ip/json/",
+        'apiUrl' => "http://ip-api.com/json/$ip",
+        'apiProvider' => 'ip-api.com (45 req/min free)',
         'headers' => [
             'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? null,
             'HTTP_X_FORWARDED_FOR' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
